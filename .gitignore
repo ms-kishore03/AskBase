@@ -1,0 +1,8 @@
+.env
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+.DS_Store
+askbase-venv/
+resources/

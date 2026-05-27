@@ -1,0 +1,7 @@
+pypdf
+python-docx
+langchain-text-splitters
+psycopg2-binary
+python-dotenv
+pydantic-settings
+google-genai
