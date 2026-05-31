@@ -37,7 +37,7 @@ def save_vector(tenant_id: str, document_id: str, chunk_text: str, embedding: li
         INSERT INTO documents(tenant_id, document_id, chunk_text, embedding)
         VALUES (%s,%s,%s,%s)
     """
-    
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -52,4 +52,45 @@ def save_vector(tenant_id: str, document_id: str, chunk_text: str, embedding: li
         if conn:
             conn.rollback()
         print(f"Failed to insert data: {e}")
+    
+    finally:
+        if cursor:
+            cursor.close()
         
+def fetch_isolated_context (query_vector: list[float], tenant_id: str, limit: int = 4) -> list[dict]:
+    """
+    Fetches the most relevant context chunks from the database based on cosine similarity to the query vector.
+
+    Args:
+        query_vector (list[float]): The vector embedding of the user's query.
+        tenant_id (str): The ID of the tenant to filter the documents.
+        limit (int, optional): The maximum number of context chunks to return. Defaults to 4
+    
+    Returns:
+        list[dict]: A list of dictionaries containing the chunk text, document ID, and similarity score for the most relevant context chunks.
+    """
+    
+    fetch_query = """
+        SELECT chunk_text, document_id, 1 - (embedding <=> %s::vector) AS similarity
+        FROM documents
+        WHERE tenant_id = %s
+        ORDER BY embedding <=> %s::vector
+        LIMIT %s
+    """
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(fetch_query,(query_vector,tenant_id,query_vector,limit))
+
+        rows = cursor.fetchall()
+        
+        return [{"chunk_text":row[0],"document_id":row[1],"similarity":row[2]} for row in rows] # the cursor.fetchall() returns list of tuples so we use lisat comprehension for fetching dataa
+
+    except Exception as e:
+        return []
+
+    finally:
+        if cursor:
+            cursor.close()

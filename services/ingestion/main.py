@@ -34,7 +34,7 @@ def process_document_pipeline(file_path: str, tenant_id: str, document_id: str) 
 
 if __name__ == "__main__":
     # Example usage
-    file_path = "sample.pdf"
+    file_path = "/home/kishore/Documents/Github/AskBase/resources/sample.pdf"
     tenant_id = "tenant_123"
     document_id = "document_456"
     process_document_pipeline(file_path, tenant_id, document_id)

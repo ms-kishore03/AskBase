@@ -5,7 +5,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     GEMINI_API_KEY: str
-
+    JWT_SECRET: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
