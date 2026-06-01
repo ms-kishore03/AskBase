@@ -9,9 +9,10 @@ from google.genai import types
 from services.query_api.core_rag import build_prompt, execute_inference
 from shared.database import fetch_isolated_context
 from shared.config import settings
-
+from services.query_api.middleware import TelemetryMiddleware
 
 app = FastAPI()
+app.add_middleware(TelemetryMiddleware)
 security = HTTPBearer()
 
 
@@ -58,15 +59,16 @@ async def query(request: QueryRequest, credentials: HTTPAuthorizationCredentials
         request.user_query
     )
 
-    response = execute_inference(prompt,config.get("temperature",0.2),config.get("max_tokens",512))
+    response_text,llm_log = execute_inference(prompt,config.get("temperature",0.2),config.get("max_tokens",512),tenant_id)
 
     end = time.perf_counter()
 
     latency_ms = (end-start) * 1000
 
     return {
-        "response": response,
+        "response": response_text,
         "sources": relavant_contents,
-        "latency" : latency_ms
+        "latency" : latency_ms,
+        "llm_log": llm_log
     }
 
