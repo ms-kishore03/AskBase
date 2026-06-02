@@ -1,0 +1,51 @@
+name: AskBase CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run RAGAS evaluation suite
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pytest tests/ -v --tb=short
+  # Build ABORTS here if any test fails (exit code != 0)
+
+  build-and-push:
+    needs: test-and-evaluate
+    # Only runs if tests pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Query API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/query.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/query-api:latest
