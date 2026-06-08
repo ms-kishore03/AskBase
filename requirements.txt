@@ -8,3 +8,7 @@ google-genai
 fastapi
 uvicorn
 python-jose[cryptography]
+pytest
+ragas
+datasets
+langchain-google-genai
